@@ -8,10 +8,10 @@ import { TelegramModule } from './telegram/telegram.module.js'
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			envFilePath: ['.env'],
+			envFilePath: ['.env']
 		}),
 		TelegramModule,
-		PrismaModule,
-	],
+		PrismaModule
+	]
 })
 export class AppModule {}

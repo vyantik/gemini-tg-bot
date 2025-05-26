@@ -19,7 +19,7 @@ export class TelegramUpdate {
 		private readonly configService: ConfigService,
 		private readonly telegramService: TelegramService,
 		private readonly fileSystemService: FileSystemService,
-		private readonly userAccessService: UserAccessService,
+		private readonly userAccessService: UserAccessService
 	) {
 		this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN')
 	}
@@ -31,7 +31,7 @@ export class TelegramUpdate {
 			return
 		}
 		await ctx.reply(
-			'👋 Привет! Отправь мне любой вопрос, и я постараюсь ответить на него.',
+			'👋 Привет! Отправь мне любой вопрос, и я постараюсь ответить на него.'
 		)
 	}
 
@@ -50,7 +50,7 @@ export class TelegramUpdate {
 			.text('➖ Удалить пользователя', 'remove_user')
 
 		await ctx.reply('Панель администратора:', {
-			reply_markup: keyboard,
+			reply_markup: keyboard
 		})
 	}
 
@@ -68,19 +68,19 @@ export class TelegramUpdate {
 			case 'list_users':
 				const users = await this.userAccessService.getAllowedUsers()
 				await ctx.reply(
-					`Список разрешенных пользователей:\n${users.join('\n')}`,
+					`Список разрешенных пользователей:\n${users.join('\n')}`
 				)
 				break
 			case 'add_user':
 				this.adminState.set(ctx.from?.id ?? 0, 'add_user')
 				await ctx.reply(
-					'Отправьте ID пользователя, которого хотите добавить.',
+					'Отправьте ID пользователя, которого хотите добавить.'
 				)
 				break
 			case 'remove_user':
 				this.adminState.set(ctx.from?.id ?? 0, 'remove_user')
 				await ctx.reply(
-					'Отправьте ID пользователя, которого хотите удалить.',
+					'Отправьте ID пользователя, которого хотите удалить.'
 				)
 				break
 		}
@@ -102,24 +102,24 @@ export class TelegramUpdate {
 					const targetUserId = parseInt(message)
 					if (isNaN(targetUserId)) {
 						await ctx.reply(
-							'Пожалуйста, отправьте корректный ID пользователя (число).',
+							'Пожалуйста, отправьте корректный ID пользователя (число).'
 						)
 						return
 					}
 
 					if (state === 'add_user') {
 						await this.userAccessService.addAllowedUser(
-							targetUserId,
+							targetUserId
 						)
 						await ctx.reply(
-							`Пользователь ${targetUserId} успешно добавлен.`,
+							`Пользователь ${targetUserId} успешно добавлен.`
 						)
 					} else {
 						await this.userAccessService.removeAllowedUser(
-							targetUserId,
+							targetUserId
 						)
 						await ctx.reply(
-							`Пользователь ${targetUserId} успешно удален.`,
+							`Пользователь ${targetUserId} успешно удален.`
 						)
 					}
 
@@ -139,14 +139,14 @@ export class TelegramUpdate {
 			}
 
 			this.logger.log(
-				`Received message: "${message}" from user "${ctx.from?.id}"`,
+				`Received message: "${message}" from user "${ctx.from?.id}"`
 			)
 
 			await ctx.reply('Подождите, я анализирую ваше сообщение...🤔')
 
 			const response = await this.telegramService.processTextMessage(
 				message,
-				ctx.from?.id ?? 0,
+				ctx.from?.id ?? 0
 			)
 
 			this.telegramService.sendMessage(ctx, response)
@@ -185,7 +185,7 @@ export class TelegramUpdate {
 				const response = await this.telegramService.processPhotoMessage(
 					downloadPath,
 					ctx.message.caption ?? undefined,
-					ctx.from?.id ?? undefined,
+					ctx.from?.id ?? undefined
 				)
 
 				this.telegramService.sendMessage(ctx, response)
@@ -213,7 +213,7 @@ export class TelegramUpdate {
 
 			const fileId = voice.file_id
 			this.logger.log(
-				`File ID полученного голосового сообщения: ${fileId}`,
+				`File ID полученного голосового сообщения: ${fileId}`
 			)
 
 			const file = await ctx.api.getFile(fileId)
@@ -223,14 +223,14 @@ export class TelegramUpdate {
 
 			const response = await this.telegramService.processVoiceMessage(
 				downloadPath,
-				ctx.from?.id ?? undefined,
+				ctx.from?.id ?? undefined
 			)
 
 			this.telegramService.sendMessage(ctx, response)
 		} catch (error) {
 			this.logger.error(error)
 			await ctx.reply(
-				'Произошла ошибка при обработке голосового сообщения.',
+				'Произошла ошибка при обработке голосового сообщения.'
 			)
 		}
 	}

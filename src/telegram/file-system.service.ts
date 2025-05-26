@@ -17,7 +17,7 @@ export class FileSystemService {
 
 	private async downloadFile(
 		fileUrl: string,
-		outputPath: string,
+		outputPath: string
 	): Promise<void> {
 		try {
 			const dir = outputPath.substring(0, outputPath.lastIndexOf('/'))
@@ -26,7 +26,7 @@ export class FileSystemService {
 			const response = await axios({
 				method: 'get',
 				url: fileUrl,
-				responseType: 'stream',
+				responseType: 'stream'
 			})
 
 			const writer = createWriteStream(outputPath)
@@ -39,7 +39,7 @@ export class FileSystemService {
 		} catch (error) {
 			this.logger.error(
 				`Ошибка при скачивании файла с ${fileUrl} в ${outputPath}`,
-				error,
+				error
 			)
 			throw error
 		}
@@ -52,12 +52,12 @@ export class FileSystemService {
 		} catch (error) {
 			if (error.code === 'ENOENT') {
 				this.logger.warn(
-					`Попытка удалить несуществующий файл: ${filePath}`,
+					`Попытка удалить несуществующий файл: ${filePath}`
 				)
 			} else {
 				this.logger.error(
 					`Ошибка при удалении файла ${filePath}:`,
-					error,
+					error
 				)
 				throw error
 			}
@@ -88,25 +88,25 @@ export class FileSystemService {
 			if (file.file_path) {
 				const fileUrl = `https://api.telegram.org/file/bot${this.botToken}/${file.file_path}`
 				this.logger.log(
-					`URL голосового сообщения для скачивания: ${fileUrl}`,
+					`URL голосового сообщения для скачивания: ${fileUrl}`
 				)
 
 				const downloadPath = `./downloads/${file.file_id}.ogg`
 				await this.downloadFile(fileUrl, downloadPath)
 				this.logger.log(
-					`Голосовое сообщение сохранено в ${downloadPath}`,
+					`Голосовое сообщение сохранено в ${downloadPath}`
 				)
 
 				return downloadPath
 			} else {
 				this.logger.error(
-					'Не удалось найти путь к голосовому сообщению.',
+					'Не удалось найти путь к голосовому сообщению.'
 				)
 			}
 		} catch (error) {
 			this.logger.error(
 				'Ошибка при скачивании голосового сообщения:',
-				error,
+				error
 			)
 		}
 	}

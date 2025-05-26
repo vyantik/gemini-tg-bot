@@ -2,15 +2,15 @@ import {
 	Content,
 	createPartFromUri,
 	createUserContent,
-	GoogleGenAI,
+	GoogleGenAI
 } from '@google/genai'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import axios from 'axios'
 import { createWriteStream } from 'fs'
-import { MessageRole } from 'generated/index.js'
 import { Context } from 'grammy'
 import { File } from 'grammy/types'
+import { MessageRole } from 'prisma/__generated__/index.js'
 
 import { PrismaService } from '../prisma/prisma.service.js'
 import { mkdir, unlink } from 'fs/promises'
@@ -27,10 +27,10 @@ export class TelegramService {
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly prisma: PrismaService,
-		private readonly fileSystemService: FileSystemService,
+		private readonly fileSystemService: FileSystemService
 	) {
 		this.ai = new GoogleGenAI({
-			apiKey: this.configService.get<string>('GEMINI_TOKEN'),
+			apiKey: this.configService.get<string>('GEMINI_TOKEN')
 		})
 		this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN')
 	}
@@ -38,7 +38,7 @@ export class TelegramService {
 	private async ctxSendMessage(ctx: Context, message: string) {
 		try {
 			await ctx.reply(message, {
-				parse_mode: 'MarkdownV2',
+				parse_mode: 'MarkdownV2'
 			})
 		} catch {
 			await ctx.reply(message)
@@ -60,8 +60,8 @@ export class TelegramService {
 				`https://api.telegram.org/bot${this.botToken}/sendChatAction`,
 				{
 					chat_id: chatId,
-					action: 'typing',
-				},
+					action: 'typing'
+				}
 			)
 		} catch (error) {
 			this.logger.error('Ошибка при отправке typing action:', error)
@@ -70,35 +70,35 @@ export class TelegramService {
 
 	public async processTextMessage(
 		message: string,
-		userId: number,
+		userId: number
 	): Promise<string> {
 		try {
 			await this.sendTypingAction(userId)
 
 			let user = await this.prisma.user.findUnique({
-				where: { id: userId },
+				where: { id: userId }
 			})
 
 			if (!user) {
 				this.logger.log(
-					`Пользователь не найден, создаем нового пользователя с id ${userId}`,
+					`Пользователь не найден, создаем нового пользователя с id ${userId}`
 				)
 				user = await this.prisma.user.create({
 					data: {
-						id: userId,
-					},
+						id: userId
+					}
 				})
 			}
 			const messages = await this.prisma.message.findMany({
 				where: { userId: userId },
 				orderBy: { createdAt: 'asc' },
-				select: { id: true },
+				select: { id: true }
 			})
 
 			const storedMessages = await this.prisma.message.findMany({
 				where: { userId: userId },
 				orderBy: { createdAt: 'asc' },
-				take: this.MAX_MESSAGES * 2,
+				take: this.MAX_MESSAGES * 2
 			})
 
 			let historyForGemini: Content[] = []
@@ -106,29 +106,29 @@ export class TelegramService {
 			if (messages.length > this.MAX_MESSAGES * 2) {
 				const messagesToDelete = messages.slice(
 					0,
-					messages.length - this.MAX_MESSAGES * 2,
+					messages.length - this.MAX_MESSAGES * 2
 				)
 				await this.prisma.message.deleteMany({
 					where: {
 						id: {
-							in: messagesToDelete.map(msg => msg.id),
-						},
-					},
+							in: messagesToDelete.map(msg => msg.id)
+						}
+					}
 				})
 			}
 
 			historyForGemini = storedMessages.map(msg => ({
 				role: msg.role === MessageRole.USER ? 'user' : 'model',
-				parts: [{ text: msg.content }],
+				parts: [{ text: msg.content }]
 			}))
 
 			const chat = this.ai.chats.create({
 				model: 'gemini-2.0-flash-lite',
-				history: historyForGemini,
+				history: historyForGemini
 			})
 
 			const result = await chat.sendMessage({
-				message: message,
+				message: message
 			})
 
 			const modelResponse = result.text
@@ -138,16 +138,16 @@ export class TelegramService {
 					data: {
 						userId: user.id,
 						content: message,
-						role: MessageRole.USER,
-					},
+						role: MessageRole.USER
+					}
 				})
 
 				await prisma.message.create({
 					data: {
 						userId: user.id,
 						content: modelResponse,
-						role: MessageRole.MODEL,
-					},
+						role: MessageRole.MODEL
+					}
 				})
 			})
 
@@ -161,7 +161,7 @@ export class TelegramService {
 	public async processPhotoMessage(
 		file_path: string,
 		message?: string,
-		userId?: number,
+		userId?: number
 	): Promise<string> {
 		try {
 			if (userId) {
@@ -169,7 +169,7 @@ export class TelegramService {
 			}
 
 			const image = await this.ai.files.upload({
-				file: file_path,
+				file: file_path
 			})
 
 			const response = await this.ai.models.generateContent({
@@ -177,9 +177,9 @@ export class TelegramService {
 				contents: [
 					createUserContent([
 						message ?? 'Опиши, что ты видишь на картинке',
-						createPartFromUri(image.uri, image.mimeType),
-					]),
-				],
+						createPartFromUri(image.uri, image.mimeType)
+					])
+				]
 			})
 
 			await this.fileSystemService.deleteFile(file_path)
@@ -193,7 +193,7 @@ export class TelegramService {
 
 	public async processVoiceMessage(
 		file_path: string,
-		userId?: number,
+		userId?: number
 	): Promise<string> {
 		try {
 			if (userId) {
@@ -203,8 +203,8 @@ export class TelegramService {
 			const audio = await this.ai.files.upload({
 				file: file_path,
 				config: {
-					mimeType: 'audio/ogg',
-				},
+					mimeType: 'audio/ogg'
+				}
 			})
 
 			const response = await this.ai.models.generateContent({
@@ -212,9 +212,9 @@ export class TelegramService {
 				contents: [
 					createUserContent([
 						'Ответь на голосовое сообщение',
-						createPartFromUri(audio.uri, audio.mimeType),
-					]),
-				],
+						createPartFromUri(audio.uri, audio.mimeType)
+					])
+				]
 			})
 
 			await this.fileSystemService.deleteFile(file_path)

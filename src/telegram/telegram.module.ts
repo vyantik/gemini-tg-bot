@@ -14,14 +14,14 @@ import { UserAccessService } from './user-access.service.js'
 		ConfigModule,
 		PrismaModule,
 		NestjsGrammyModule.forRoot({
-			token: process.env.TELEGRAM_BOT_TOKEN,
-		}),
+			token: process.env.TELEGRAM_BOT_TOKEN
+		})
 	],
 	providers: [
 		TelegramUpdate,
 		TelegramService,
 		FileSystemService,
-		UserAccessService,
-	],
+		UserAccessService
+	]
 })
 export class TelegramModule {}

@@ -8,7 +8,7 @@ export class UserAccessService {
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly prisma: PrismaService,
+		private readonly prisma: PrismaService
 	) {
 		const adminIds =
 			this.configService.get<string>('ADMIN_IDS')?.split(',') || []
@@ -23,7 +23,7 @@ export class UserAccessService {
 		if (this.isAdmin(userId)) return true
 
 		const user = await this.prisma.allowedUser.findUnique({
-			where: { userId },
+			where: { userId }
 		})
 		return !!user
 	}
@@ -32,19 +32,19 @@ export class UserAccessService {
 		await this.prisma.allowedUser.upsert({
 			where: { userId },
 			update: {},
-			create: { userId },
+			create: { userId }
 		})
 	}
 
 	async removeAllowedUser(userId: number): Promise<void> {
 		await this.prisma.allowedUser.delete({
-			where: { userId },
+			where: { userId }
 		})
 	}
 
 	async getAllowedUsers(): Promise<number[]> {
 		const users = await this.prisma.allowedUser.findMany({
-			select: { userId: true },
+			select: { userId: true }
 		})
 		return users.map(user => user.userId)
 	}
